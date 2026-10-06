@@ -1,28 +1,45 @@
 {
   "name": "youtuber-by-vtv",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "Tạo video YouTube Short/Long bằng Claude Code + Remotion + Gemini (ảnh, giọng đọc)",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
+  "type": "module",
   "dependencies": {
+    "@google/genai": "^2.27.0",
     "@remotion/cli": "4.0.533",
+    "@remotion/google-fonts": "4.0.533",
+    "@remotion/media": "4.0.533",
+    "@remotion/media-parser": "4.0.533",
+    "@remotion/transitions": "4.0.533",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "remotion": "4.0.533"
+    "remotion": "4.0.533",
+    "zod": "4.5.4"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.533",
+    "@types/node": "^26.6.4",
     "@types/react": "19.2.7",
     "@types/web": "0.0.166",
+    "dotenv": "^18.0.5",
     "eslint": "9.39.5",
     "prettier": "3.8.1",
+    "tsx": "^4.23.15",
     "typescript": "5.9.3"
   },
   "scripts": {
     "dev": "remotion studio",
+    "studio": "remotion studio",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "typecheck": "tsc --noEmit",
+    "validate": "tsx scripts/validate-spec.ts",
+    "voice": "tsx scripts/gen-voice.ts",
+    "images": "tsx scripts/gen-images.ts",
+    "scan-audio": "tsx scripts/scan-audio-library.ts",
+    "render": "tsx scripts/render.ts"
   }
 }

@@ -1,0 +1,60 @@
+{
+  "id": "sample-short-vi",
+  "format": "short",
+  "language": "vi-VN",
+  "title": "3 sự thật thú vị về cà phê Việt Nam",
+  "targetDurationSec": 30,
+  "style": {
+    "visual": "cinematic photography, warm brown and orange color grading, soft morning light, shallow depth of field, rich textures, Vietnamese setting",
+    "tone": "energetic and curious",
+    "captionStyle": "karaoke",
+    "accentColor": "#FFB800"
+  },
+  "voice": {
+    "name": "Kore",
+    "styleInstruction": "Đọc bằng giọng nữ trẻ, hào hứng, rõ ràng, nhịp hơi nhanh như video ngắn trên mạng xã hội."
+  },
+  "music": null,
+  "scenes": [
+    {
+      "id": "hook",
+      "narration": "Bạn uống cà phê mỗi ngày, nhưng có biết ba điều này?",
+      "visualPrompt": "Close-up of a glass of Vietnamese iced coffee with condensed milk on a small wooden table at a Hanoi sidewalk cafe, steam and condensation, morning street blurred behind",
+      "onScreenText": "3 SỰ THẬT VỀ CÀ PHÊ VIỆT",
+      "sfx": [],
+      "transition": "slide-up"
+    },
+    {
+      "id": "fact-1",
+      "narration": "Việt Nam là nước xuất khẩu cà phê lớn thứ hai thế giới, chỉ sau Brazil.",
+      "visualPrompt": "Aerial view of lush green coffee plantation terraces in the Central Highlands of Vietnam, farmers in conical hats harvesting red coffee cherries",
+      "onScreenText": "#2 THẾ GIỚI",
+      "sfx": [],
+      "transition": "fade"
+    },
+    {
+      "id": "fact-2",
+      "narration": "Cà phê trứng ra đời ở Hà Nội năm 1946, khi sữa tươi khan hiếm nên người ta dùng lòng đỏ trứng.",
+      "visualPrompt": "A cup of Vietnamese egg coffee with thick golden foam in a vintage Hanoi cafe, old wooden interior, warm lamp light",
+      "onScreenText": "CÀ PHÊ TRỨNG — 1946",
+      "sfx": [],
+      "transition": "wipe"
+    },
+    {
+      "id": "fact-3",
+      "narration": "Và chiếc phin nhỏ bé giúp cà phê nhỏ giọt thật chậm, đậm đà khó quên.",
+      "visualPrompt": "Macro shot of a stainless steel Vietnamese phin filter dripping dark coffee into a glass, droplets frozen in motion, dark moody background",
+      "onScreenText": "CHIẾC PHIN",
+      "sfx": [],
+      "transition": "fade"
+    },
+    {
+      "id": "cta",
+      "narration": "Theo dõi kênh để khám phá thêm nhiều điều thú vị nhé!",
+      "visualPrompt": "Two friends laughing and clinking glasses of iced coffee at a colorful Saigon street cafe at golden hour",
+      "onScreenText": "THEO DÕI NGAY",
+      "sfx": [],
+      "transition": "none"
+    }
+  ]
+}

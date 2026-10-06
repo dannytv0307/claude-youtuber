@@ -2,6 +2,19 @@ node_modules
 dist
 .DS_Store
 .env
+.env.*
+!.env.example
 
-# Ignore the output video from Git but not videos you import into src/.
+# Rendered videos
 out
+
+# Generated assets (images, voice, render.json) - regenerate with scripts/
+public/projects/
+
+# Audio downloaded from YouTube Audio Library (keep catalog.json)
+public/audio-library/music/*
+public/audio-library/sfx/*
+!public/audio-library/**/.gitkeep
+
+# Claude Code local settings
+.claude/settings.local.json

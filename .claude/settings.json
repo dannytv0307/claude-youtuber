@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run validate:*)",
+      "Bash(npm run voice:*)",
+      "Bash(npm run images:*)",
+      "Bash(npm run scan-audio:*)",
+      "Bash(npm run render:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsx scripts/:*)",
+      "Bash(npx remotion studio:*)",
+      "Bash(npx remotion still:*)",
+      "Bash(npx remotion render:*)",
+      "Bash(npx remotion compositions:*)",
+      "Bash(npx tsc:*)",
+      "PowerShell(npm run validate:*)",
+      "PowerShell(npm run voice:*)",
+      "PowerShell(npm run images:*)",
+      "PowerShell(npm run scan-audio:*)",
+      "PowerShell(npm run render:*)",
+      "PowerShell(npm run typecheck:*)",
+      "PowerShell(npm run lint:*)",
+      "PowerShell(npx tsx scripts/:*)",
+      "PowerShell(npx remotion studio:*)",
+      "PowerShell(npx remotion still:*)",
+      "PowerShell(npx remotion render:*)",
+      "PowerShell(npx remotion compositions:*)",
+      "PowerShell(npx tsc:*)",
+      "Read(./projects/**)",
+      "Read(./public/**)",
+      "Read(./out/**)",
+      "Edit(./projects/**)",
+      "Write(./projects/**)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(git push:*)",
+      "PowerShell(git push:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-spec.mjs\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "remotion@remotion": true
+  },
+  "extraKnownMarketplaces": {
+    "remotion": {
+      "source": {
+        "source": "github",
+        "repo": "remotion-dev/claude-code-plugin"
+      }
+    }
+  }
+}

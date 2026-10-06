@@ -1,0 +1,12 @@
+{
+  "id": "sample-short-vi",
+  "format": "short",
+  "targetDurationSec": 30,
+  "language": "vi-VN",
+  "topic": "3 sự thật thú vị về cà phê Việt Nam",
+  "style": "năng động, tò mò, hình ảnh điện ảnh ấm áp",
+  "audience": "người trẻ 18-30 tuổi yêu cà phê",
+  "voice": "giọng nữ trẻ, rõ ràng, hào hứng",
+  "cta": "Theo dõi kênh để xem thêm",
+  "notes": "Video mẫu để kiểm thử pipeline"
+}
