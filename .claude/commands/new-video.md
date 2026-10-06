@@ -9,6 +9,12 @@ Yêu cầu ban đầu của người dùng: $ARGUMENTS
 
 ## Bước 1: Brief
 - Lấy thông tin từ yêu cầu trên. Còn thiếu trường bắt buộc (`format`, `targetDurationSec`, `language`, `topic`) thì hỏi **một lần**, gộp mọi câu hỏi, kèm gợi ý mặc định. Ví dụ: "Short 45s tiếng Việt, phong cách năng động?"
+- **Luôn hỏi nguồn nhạc nền** trong cùng lần hỏi đó (trừ khi người dùng đã nói rõ). Đưa ra 3 lựa chọn:
+  1. **Thư viện YouTube** (`library`): miễn phí, người dùng tự tải từ YouTube Audio Library rồi chạy `/scan-audio`. Nếu catalog đã có bài phù hợp thì nói tên bài.
+  2. **AI tạo nhạc** (`ai`): tạo bằng preset nhạc trong `ai-providers.json` (mặc định gợi ý `lyria`, chạy trên Vertex AI). Không cần tải, không cần ghi công. Tốn một ít credit (vài cent cho mỗi đoạn khoảng 30 giây).
+  3. **Không nhạc** (`none`).
+
+  Ghi lựa chọn vào `brief.json` ở trường `"music"`.
 - Đặt `id` dạng slug ngắn: chữ thường không dấu, nối bằng gạch ngang, có hậu tố ngôn ngữ, ví dụ `ca-phe-viet-vi`. Không trùng thư mục có sẵn trong `projects/`.
 - Ghi `projects/<id>/brief.json` (xem mẫu `projects/sample-short-vi/brief.json`).
 
@@ -30,7 +36,7 @@ Yêu cầu ban đầu của người dùng: $ARGUMENTS
   ## Bảng cảnh
   | # | id | Vai trò (hook / bối cảnh / leo thang / bước ngoặt / cao trào / kết) | Ý chính | Nối sang cảnh sau | ~s |
   ## Hình ảnh, giọng đọc, nhạc
-  <kiểu visual của từng cảnh: ảnh AI, layout (title/big-number/list/timeline/quote/compare) hay custom (mô tả hình sẽ vẽ); phong cách và màu (accentColor, backgroundColor); giọng đọc (preset AI + tên giọng, hoặc "không giọng"); nhạc: trackId, hoặc tiêu chí tìm trên YouTube Audio Library>
+  <kiểu visual của từng cảnh: ảnh AI, layout (title/big-number/list/timeline/quote/compare) hay custom (mô tả hình sẽ vẽ); phong cách và màu (accentColor, backgroundColor); giọng đọc (preset AI + tên giọng, hoặc "không giọng"); nhạc theo brief.music: library → trackId hoặc tiêu chí tìm trên YouTube Audio Library; ai → prompt tiếng Anh (thể loại, nhạc cụ, mood, tempo), số đoạn (clips), preset nhạc và chi phí ước tính; none → "không nhạc">
   ```
 - Cột **Nối sang cảnh sau** phải bắt đầu bằng "nhưng", "vì vậy", "hoá ra", "thế là"… Tự rà cột này trước khi đưa người dùng xem. Ô nào chỉ nối được bằng "và" hay "ngoài ra" thì sửa lại mạch truyện.
 - Tóm tắt plan cho người dùng, **bắt đầu bằng câu chuyện** (câu hỏi lớn, người dẫn chuyện, mạch truyện), sau đó mới tới bảng cảnh. Nhắc thêm các hướng kể khác. Rồi **dừng chờ duyệt**.
@@ -38,6 +44,7 @@ Yêu cầu ban đầu của người dùng: $ARGUMENTS
 ## Bước 3: Script ⏸
 - Giao cho agent `script-writer` viết `projects/<id>/spec.json` từ brief và plan, hoặc tự viết nếu video ngắn và đơn giản.
 - Hook PostToolUse tự chạy `validate-spec`. Sửa tới khi hết lỗi và cảnh báo.
+- Nếu `brief.music` là `"ai"`: ghi `musicPrompt` theo plan và đặt `"music": { "trackId": "ai-<id>" }`. Nếu muốn dùng preset nhạc khác `default`, ghi thêm `providers.music`. Cảnh báo "Không có track ai-<id>" là bình thường cho tới Bước 4.
 - Giao agent `story-editor` rà mạch truyện. Agent này sửa trực tiếp những chỗ nối yếu và báo lại. Đọc báo cáo, và nếu nó đánh giá "chưa đạt" thì sửa tiếp (tự sửa hoặc giao lại `script-writer`) cho tới khi đạt.
 - Video dài, hoặc hình ảnh cần nhất quán nhân vật (kể cả người dẫn chuyện xuất hiện trong ảnh): giao agent `visual-director` rà lại `visualPrompt` và `style.visual`.
 - Cho người dùng xem: một câu nhắc lại câu hỏi lớn, bảng `cảnh | lời đọc | onScreenText` và tổng thời lượng ước tính. Rồi **dừng chờ duyệt**.
@@ -49,6 +56,8 @@ Yêu cầu ban đầu của người dùng: $ARGUMENTS
   - Chạy `npm run validate -- <id>`, rồi chuyển sang Bước 5.
 - Báo trước: "Sẽ dùng <preset ảnh/giọng trong ai-providers.json> tạo N đoạn giọng đọc và N ảnh", kèm chi phí ước tính nếu là API trả phí. **Chờ đồng ý.**
 - Chạy `npm run voice -- <id>`, sau đó `npm run images -- <id>`.
+- Nhạc AI (`brief.music` là `"ai"`): nêu số đoạn và chi phí ngay trong lời báo trước ở trên, rồi chạy `npm run music -- <id>`. Nếu preset là `none`, thêm `--provider=lyria` hoặc dùng preset người dùng đã chọn. Kiểm tra catalog đã có track `ai-<id>`. Không cần ghi công nhạc.
+- Ở chế độ không dùng AI cho ảnh và giọng mà vẫn chọn nhạc AI: Bước 4 chỉ cần hỏi đồng ý cho phần nhạc.
 - Cảnh lỗi (bị chặn safety, rỗng…): sửa `visualPrompt` hoặc `narration`, chạy lại với `--scene=<sceneId>`.
 - Chạy lại `npm run validate -- <id>`. Giờ thời lượng đã là thời lượng thật của giọng đọc.
 

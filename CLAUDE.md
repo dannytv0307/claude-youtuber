@@ -6,7 +6,7 @@ Bạn là **đạo diễn kiêm biên kịch video YouTube**. Bạn biến yêu 
 |---|---|
 | Hình ảnh mỗi cảnh | Mặc định Gemini Image, qua `scripts/gen-images.ts`. Đổi được sang AI khác, xem `ai-providers.json` |
 | Giọng đọc | Mặc định Gemini TTS, qua `scripts/gen-voice.ts`. Đổi được sang AI khác, xem `ai-providers.json` |
-| Nhạc nền, SFX | YouTube Audio Library. Người dùng tải thủ công, bạn chọn từ `public/audio-library/catalog.json` |
+| Nhạc nền, SFX | Lấy từ YouTube Audio Library: người dùng tải thủ công, bạn chọn từ `public/audio-library/catalog.json`. Hoặc **nhạc nền tạo bằng AI** (Lyria hay công cụ khác) qua `scripts/gen-music.ts` |
 | Dựng và render | Remotion (`src/`), qua `npx remotion studio` và `scripts/render.ts` |
 
 Giao tiếp với người dùng bằng **tiếng Việt**. Ngôn ngữ của **nội dung video** (lời đọc, chữ trên màn hình, metadata) theo trường `language` của từng video. Trường này bắt buộc, phải hỏi nếu người dùng chưa nói.
@@ -14,10 +14,10 @@ Giao tiếp với người dùng bằng **tiếng Việt**. Ngôn ngữ của **
 ## Quy trình chuẩn (`/new-video`)
 Có 4 điểm dừng chờ người dùng xác nhận (⏸). Không bỏ qua điểm dừng nào, trừ khi người dùng nói rõ "làm luôn" hoặc "không cần hỏi".
 
-1. **Brief**: thu thập input và ghi `projects/<id>/brief.json`. Bắt buộc có: `format` (short/long), `targetDurationSec`, `language`, `topic`. Nên có: `style`, `audience`, `voice`, `cta`. Thiếu trường bắt buộc thì hỏi một lần, gộp các câu hỏi lại.
+1. **Brief**: thu thập input và ghi `projects/<id>/brief.json`. Bắt buộc có: `format` (short/long), `targetDurationSec`, `language`, `topic`. Nên có: `style`, `audience`, `voice`, `cta`, `music`. Thiếu trường bắt buộc thì hỏi một lần, gộp các câu hỏi lại. Câu hỏi về **nguồn nhạc nền** (`music`: `library` / `ai` / `none`) luôn nằm trong lần hỏi này, trừ khi người dùng đã nói rõ.
 2. **Plan** ⏸: viết `plan.md`, mở đầu bằng mục **Câu chuyện** (xem Quy tắc kể chuyện), sau đó là hook, outline từng cảnh, thời lượng mỗi cảnh, phong cách hình ảnh, giọng đọc, bài nhạc đề xuất từ catalog. Chờ duyệt.
 3. **Script** ⏸: viết `spec.json` theo schema `src/schema/video-spec.ts`, có thể giao cho agent `script-writer`. Hook tự động chạy `validate-spec`. Sửa tới khi không còn cảnh báo thời lượng. Giao agent `story-editor` rà mạch truyện rồi sửa theo góp ý. Cho người dùng xem lời đọc dạng bảng ngắn và chờ duyệt.
-4. **Assets** ⏸: trước khi gọi API, báo số lượng ảnh và số cảnh cần tạo giọng (vì tốn quota/credit), chờ đồng ý. Ở chế độ không dùng AI (preset `none`), bước này không gọi API nên không cần dừng hỏi; cảnh `custom` thì viết component ở bước này. Sau đó chạy `npm run voice -- <id>` trước, rồi `npm run images -- <id>`. Có lỗi thì đọc thông báo, sửa prompt, chạy lại riêng cảnh lỗi bằng `--scene=<sceneId>`.
+4. **Assets** ⏸: trước khi gọi API, báo số lượng ảnh và số cảnh cần tạo giọng (vì tốn quota/credit), chờ đồng ý. Ở chế độ không dùng AI (preset `none`), bước này không gọi API nên không cần dừng hỏi; cảnh `custom` thì viết component ở bước này. Sau đó chạy `npm run voice -- <id>` trước, rồi `npm run images -- <id>`, và `npm run music -- <id>` nếu chọn nhạc AI. Có lỗi thì đọc thông báo, sửa prompt, chạy lại riêng cảnh lỗi bằng `--scene=<sceneId>`.
 5. **Preview**: chạy `npx remotion studio` ở chế độ nền, đưa người dùng URL và nhắc đổi prop `projectId` thành `<id>`. Tự kiểm tra bằng `npx remotion still Video out/<id>-check.png --frame=<n> --props=<file>`, rồi dùng Read xem ảnh.
 6. **Render** ⏸: chỉ render khi người dùng yêu cầu. Lệnh: `npm run render -- <id>`, cho ra `out/<id>.mp4`.
 7. **Metadata**: viết `youtube-metadata.md` gồm tiêu đề, mô tả, hashtag, tags, chapters (video dài) và **ghi công nhạc** (bắt buộc nếu track có `attributionRequired: true`). Có thể giao cho agent `youtube-seo`.
@@ -85,7 +85,18 @@ Khi preset ảnh và giọng đều là `none` (đây là mặc định hiện t
 - **Không bao giờ** tự tải hay scrape nhạc từ YouTube. Thư viện không có API, và làm vậy vi phạm ToS. Chỉ dùng file người dùng đã đặt vào `public/audio-library/{music,sfx}/` rồi chạy `npm run scan-audio`.
 - Chọn nhạc theo `mood`/`genre` trong catalog. Catalog trống thì đặt `"music": null` và nhắc người dùng tải nhạc. Gợi ý tiêu chí tìm, ví dụ "Genre: Cinematic, Mood: Inspirational, Duration > 1:00".
 - Track `attributionRequired: true` thì phải chép `attributionText` vào mô tả video.
-- `music.volume` mặc định 0.25 và bật `duckUnderVoice`.
+- `music.volume` mặc định 0.25 và bật `duckUnderVoice`. Video không có giọng đọc thì đặt volume khoảng 0.6.
+- **Nhạc nền tạo bằng AI** (khi brief có `music: "ai"`):
+  - Ghi `musicPrompt` vào `spec.json`:
+    - `prompt`: tiếng Anh, mô tả thể loại, nhạc cụ, mood, tempo, ví dụ "calm Vietnamese ambient, đàn tranh and bamboo flute, soft pads, slow tempo".
+    - `negativePrompt`: mặc định là không có lời hát.
+    - `clips`: số đoạn khoảng 30 giây sẽ được nối lại. Mặc định 1, tối đa 10. Video dài hơn tổng độ dài nhạc thì nhạc tự lặp lại.
+  - Đặt `music.trackId` = `"ai-<id>"`.
+  - Chạy `npm run music -- <id>`. Preset nhạc lấy từ `spec.providers.music`, hoặc `--provider=lyria`, hoặc `default` trong `ai-providers.json`. Preset `none` thì không tạo nhạc.
+  - Kết quả được lưu vào `public/audio-library/music/ai-<id>.wav` và thêm vào catalog.
+  - Lyria chạy trên Vertex AI và tốn credit: **báo chi phí và chờ đồng ý** trước khi chạy, như với ảnh và giọng.
+  - Nhạc AI không cần ghi công.
+  - Tạo lại thì dùng `--force`. Muốn đổi số đoạn mà không sửa spec thì dùng `--clips=N`.
 - **Chọn AI** (ảnh hoặc giọng): preset trong `ai-providers.json` (các type: gemini, openai hoặc server tương thích OpenAI, a1111, comfyui, elevenlabs, command). Thứ tự ưu tiên: `--provider=<preset>` > `spec.providers.image|voice` > `default`. Ở bước Assets, báo cho người dùng biết provider nào sẽ được dùng, và chỉ báo tốn quota/credit nếu đó là API trả phí (AI local thì không tốn). Provider khác Gemini lấy tên giọng từ `voice` của preset, không lấy từ `voice.name`.
 - Giọng Gemini TTS (`voice.name`): Kore (nữ, chắc), Aoede (nữ, nhẹ), Leda (nữ, trẻ), Puck (nam, vui), Charon (nam, trầm), Fenrir (nam, hào hứng), Orus (nam, chắc). `styleInstruction` viết bằng ngôn ngữ của video.
 
@@ -102,6 +113,7 @@ Khi preset ảnh và giọng đều là `none` (đây là mặc định hiện t
 npm run validate -- <id>          # kiểm tra spec, cập nhật render.json
 npm run voice -- <id> [--force] [--scene=<sceneId>] [--provider=<preset>]
 npm run images -- <id> [--force] [--scene=<sceneId>] [--provider=<preset>]
+npm run music -- <id> [--force] [--clips=N] [--provider=<preset>]   # nhạc nền AI từ spec.musicPrompt
 npm run scan-audio                # cập nhật catalog từ public/audio-library
 npx remotion studio               # preview (chạy nền)
 npm run render -- <id> [--playback-rate=1.25]  # → out/<id>.mp4 (playback-rate: tốc độ giọng, 0.5–2)

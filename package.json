@@ -13,6 +13,7 @@
     "@remotion/media": "4.0.533",
     "@remotion/media-parser": "4.0.533",
     "@remotion/transitions": "4.0.533",
+    "google-auth-library": "^10.9.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.533",
@@ -39,6 +40,7 @@
     "validate": "tsx scripts/validate-spec.ts",
     "voice": "tsx scripts/gen-voice.ts",
     "images": "tsx scripts/gen-images.ts",
+    "music": "tsx scripts/gen-music.ts",
     "scan-audio": "tsx scripts/scan-audio-library.ts",
     "render": "tsx scripts/render.ts"
   }

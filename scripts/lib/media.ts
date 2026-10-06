@@ -110,7 +110,25 @@ export const toPcmWav = (buf: Buffer) => {
   }
 };
 
-const quote = (s: string) => (process.platform === "win32" ? `"${s}"` : `'${s.replace(/'/g, `'\\''`)}'`);
+/** Any audio → 16-bit PCM WAV with the given sample rate / channel count (for joining music clips). */
+export const toPcmWavAs = (buf: Buffer, sampleRate: number, channels: number) => {
+  const wav = parseWav(buf);
+  if (wav && wav.audioFormat === 1 && wav.bitsPerSample === 16 && wav.sampleRate === sampleRate && wav.channels === channels) {
+    return pcmToWav(Buffer.from(wav.data), sampleRate, channels, 16);
+  }
+  const src = tmpFile("audio");
+  const dst = tmpFile("wav");
+  try {
+    fs.writeFileSync(src, buf);
+    ffmpeg(["-i", src, "-ac", String(channels), "-ar", String(sampleRate), "-c:a", "pcm_s16le", dst]);
+    return fs.readFileSync(dst);
+  } finally {
+    fs.rmSync(src, { force: true });
+    fs.rmSync(dst, { force: true });
+  }
+};
+
+const quote =(s: string) => (process.platform === "win32" ? `"${s}"` : `'${s.replace(/'/g, `'\\''`)}'`);
 
 /**
  * Run a user-defined command template. {{name}} placeholders are replaced by

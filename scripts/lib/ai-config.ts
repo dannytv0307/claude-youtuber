@@ -91,7 +91,27 @@ export const VoicePresetSchema = z.discriminatedUnion("type", [
 ]);
 
 export type ImagePreset = z.infer<typeof ImagePresetSchema>;
+export const MusicPresetSchema = z.discriminatedUnion("type", [
+  /** No generation: music comes from YouTube Audio Library files (catalog.json) or none at all */
+  z.object({ type: z.literal("none") }),
+  /** Google Lyria on Vertex AI (ADC auth, same project as Gemini); instrumental ~30s clips */
+  z.object({
+    type: z.literal("lyria"),
+    model: z.string().default("lyria-002"),
+    location: z.string().default("us-central1"),
+  }),
+  /** Any CLI: placeholders {{prompt_file}} {{negative_file}} {{seconds}} {{out}} */
+  z.object({
+    type: z.literal("command"),
+    command: z.string(),
+    outputExt: z.string().default("wav"),
+    /** Length of one clip the command produces */
+    seconds: z.number().positive().default(30),
+  }),
+]);
+
 export type VoicePreset = z.infer<typeof VoicePresetSchema>;
+export type MusicPreset = z.infer<typeof MusicPresetSchema>;
 
 const section = <T extends z.ZodType>(preset: T) =>
   z
@@ -101,6 +121,9 @@ const section = <T extends z.ZodType>(preset: T) =>
 export const AiConfigSchema = z.object({
   image: section(ImagePresetSchema),
   voice: section(VoicePresetSchema),
+  music: z
+    .object({ default: z.string().default("none"), presets: z.record(z.string(), MusicPresetSchema).default({}) })
+    .default({ default: "none", presets: {} }),
 });
 
 const loadConfig = () => {
@@ -120,7 +143,7 @@ const cliProvider = () =>
   process.argv.find((a) => a.startsWith("--provider="))?.split("=")[1];
 
 const resolve = <T>(
-  kind: "image" | "voice",
+  kind: "image" | "voice" | "music",
   presets: Record<string, T>,
   fallback: string,
   fromSpec: string | undefined,
@@ -141,6 +164,14 @@ export const resolveImageProvider = (spec: VideoSpec) => {
   return resolve<ImagePreset>("image", cfg.presets, cfg.default, spec.providers?.image, {
     gemini: { type: "gemini" },
     none: { type: "none" },
+  });
+};
+
+export const resolveMusicProvider = (spec: VideoSpec) => {
+  const cfg = loadConfig().music;
+  return resolve<MusicPreset>("music", cfg.presets, cfg.default, spec.providers?.music, {
+    none: { type: "none" },
+    lyria: { type: "lyria", model: "lyria-002", location: "us-central1" },
   });
 };
 

@@ -1,5 +1,5 @@
 {
-  "_readme": "Chọn AI tạo ảnh/giọng. Thứ tự ưu tiên: --provider=<tên> > spec.providers.image|voice > \"default\" dưới đây. Preset có sẵn: \"gemini\", \"none\" (không gọi AI: giọng bị bỏ qua, cảnh dùng layout/custom vẽ bằng code). API key để trong .env, preset chỉ ghi tên biến (apiKeyEnv). Xem README mục \"Dùng AI khác\" và \"Không dùng AI\".",
+  "_readme": "Chọn AI tạo ảnh/giọng/nhạc nền. Thứ tự ưu tiên: --provider=<tên> > spec.providers.image|voice > \"default\" dưới đây. Preset có sẵn: \"gemini\", \"none\" (không gọi AI: giọng bị bỏ qua, cảnh dùng layout/custom vẽ bằng code). API key để trong .env, preset chỉ ghi tên biến (apiKeyEnv). Xem README mục \"Dùng AI khác\" và \"Không dùng AI\".",
   "image": {
     "default": "none",
     "presets": {
@@ -64,6 +64,24 @@
       "piper": {
         "type": "command",
         "command": "piper --model voices/vi_VN-vais1000-medium.onnx --output_file {{out}} < {{text_file}}"
+      }
+    }
+  },
+  "music": {
+    "default": "none",
+    "presets": {
+      "none": {
+        "type": "none"
+      },
+      "lyria": {
+        "type": "lyria",
+        "model": "lyria-002",
+        "location": "us-central1"
+      },
+      "my-cli": {
+        "type": "command",
+        "command": "my-music-tool --prompt-file {{prompt_file}} --seconds {{seconds}} --out {{out}}",
+        "seconds": 30
       }
     }
   }

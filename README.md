@@ -41,6 +41,7 @@ Các agent phụ trong `.claude/agents/`:
 npm run validate -- <id>     # kiểm tra spec, ước tính thời lượng
 npm run voice -- <id>        # Gemini TTS → public/projects/<id>/voice/
 npm run images -- <id>       # Gemini Image → public/projects/<id>/images/
+npm run music -- <id>        # nhạc nền AI từ spec.musicPrompt → public/audio-library/music/ai-<id>.wav
 npm run studio               # preview, chọn composition "Video", đặt projectId (và playbackRate nếu muốn)
 npm run render -- <id>       # → out/<id>.mp4
 npm run render -- <id> --playback-rate=1.25   # giọng nhanh hơn 25%, video tự ngắn lại
@@ -75,6 +76,20 @@ Mặc định ảnh và giọng đọc dùng Gemini. File `ai-providers.json` kh
 **Lưu ý:**
 - Với provider khác Gemini, tên giọng lấy từ `voice` của preset. Nếu preset không có, dự án dùng `spec.voice.name`, vốn là tên giọng Gemini.
 - Không nên đổi provider ảnh giữa chừng một video, vì phong cách ảnh sẽ lệch nhau.
+
+## Nhạc nền bằng AI
+Ngoài nhạc tải từ YouTube Audio Library, bạn có thể cho AI tạo nhạc nền. Khi chạy `/new-video`, Claude sẽ hỏi bạn chọn nguồn nhạc: thư viện, AI, hay không nhạc.
+- Trong `spec.json`:
+  ```json
+  "musicPrompt": { "prompt": "calm Vietnamese ambient, dan tranh and bamboo flute, soft pads, slow tempo", "clips": 4 },
+  "music": { "trackId": "ai-<id>" }
+  ```
+- Chạy `npm run music -- <id> --provider=lyria`. Lệnh này tạo `clips` đoạn khoảng 30 giây, nối chúng với crossfade 3 giây, lưu thành `public/audio-library/music/ai-<id>.wav` và thêm vào catalog. Nếu video dài hơn đoạn nhạc thì nhạc tự lặp lại.
+- Các preset nhạc nằm trong mục `music` của `ai-providers.json`:
+  - `none`: mặc định, không tạo nhạc.
+  - `lyria`: Google Lyria trên Vertex AI, dùng cùng project và cách xác thực ADC như Gemini, **tốn credit**.
+  - `command`: dùng công cụ bất kỳ, kể cả model chạy local như MusicGen, với các placeholder `{{prompt_file}}`, `{{negative_file}}`, `{{seconds}}`, `{{out}}`.
+- Nhạc AI không cần ghi công. Tạo lại thì thêm `--force`.
 
 ## Không dùng AI (0 đồng)
 Preset có sẵn `none` sẽ bỏ qua bước tạo ảnh và tạo giọng. Đây là **mặc định hiện tại** trong `ai-providers.json`. Ở chế độ này Claude dựng toàn bộ video bằng code:
