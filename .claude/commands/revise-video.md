@@ -6,7 +6,7 @@ argument-hint: "<id> <yêu cầu sửa>"
 Yêu cầu: $ARGUMENTS
 
 1. Đọc `projects/<id>/spec.json` và `plan.md` để nắm hiện trạng.
-2. Sửa `spec.json` theo yêu cầu. Hook sẽ tự validate.
+2. Sửa `spec.json` theo yêu cầu. Hook sẽ tự validate. Nếu sửa lời đọc, thêm, bớt hoặc đổi thứ tự cảnh, phải giữ mạch truyện (xem "Quy tắc kể chuyện" trong CLAUDE.md): kiểm tra lại câu nối với cảnh trước và cảnh sau. Thay đổi lớn thì giao agent `story-editor` rà lại.
 3. Xác định cảnh nào cần tạo lại:
    - `narration` hoặc `voice` đổi → tạo lại giọng: `npm run voice -- <id> --scene=<sceneId>`. Đổi voice cho toàn bộ video thì dùng `--force`.
    - `visualPrompt` hoặc `style.visual` đổi → tạo lại ảnh: `npm run images -- <id> --scene=<sceneId>`, hoặc `--force` nếu đổi style chung.

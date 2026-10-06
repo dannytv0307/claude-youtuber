@@ -26,9 +26,40 @@ export const pcmToWav = (
   return Buffer.concat([header, pcm]);
 };
 
-/** Duration of a PCM WAV file written by pcmToWav (reads its header). */
+/**
+ * Walk the RIFF chunks of a WAV file. Tolerates extra chunks (LIST…) and
+ * streamed files whose data size is 0xFFFFFFFF. Returns null if not a WAV.
+ */
+export const parseWav = (wav: Buffer) => {
+  if (wav.length < 12 || wav.toString("ascii", 0, 4) !== "RIFF" || wav.toString("ascii", 8, 12) !== "WAVE") {
+    return null;
+  }
+  let fmt: { audioFormat: number; channels: number; sampleRate: number; byteRate: number; bitsPerSample: number } | null = null;
+  for (let off = 12; off + 8 <= wav.length; ) {
+    const id = wav.toString("ascii", off, off + 4);
+    const size = wav.readUInt32LE(off + 4);
+    const body = off + 8;
+    if (id === "fmt ") {
+      fmt = {
+        audioFormat: wav.readUInt16LE(body),
+        channels: wav.readUInt16LE(body + 2),
+        sampleRate: wav.readUInt32LE(body + 4),
+        byteRate: wav.readUInt32LE(body + 8),
+        bitsPerSample: wav.readUInt16LE(body + 14),
+      };
+    } else if (id === "data") {
+      if (!fmt) return null;
+      const end = Math.min(body + size, wav.length);
+      return { ...fmt, data: wav.subarray(body, end) };
+    }
+    off = body + size + (size % 2);
+  }
+  return null;
+};
+
+/** Duration of a WAV file, from its fmt/data chunks. */
 export const wavDurationSec = (wav: Buffer) => {
-  const byteRate = wav.readUInt32LE(28);
-  const dataSize = wav.readUInt32LE(40);
-  return dataSize / byteRate;
+  const parsed = parseWav(wav);
+  if (!parsed) throw new Error("File không phải WAV hợp lệ");
+  return parsed.data.length / parsed.byteRate;
 };

@@ -1,0 +1,70 @@
+{
+  "_readme": "Chọn AI tạo ảnh/giọng. Thứ tự ưu tiên: --provider=<tên> > spec.providers.image|voice > \"default\" dưới đây. Preset có sẵn: \"gemini\", \"none\" (không gọi AI: giọng bị bỏ qua, cảnh dùng layout/custom vẽ bằng code). API key để trong .env, preset chỉ ghi tên biến (apiKeyEnv). Xem README mục \"Dùng AI khác\" và \"Không dùng AI\".",
+  "image": {
+    "default": "none",
+    "presets": {
+      "none": {
+        "type": "none"
+      },
+      "gemini": {
+        "type": "gemini"
+      },
+      "openai": {
+        "type": "openai",
+        "model": "gpt-image-1",
+        "extra": {
+          "quality": "medium"
+        }
+      },
+      "sd-webui": {
+        "type": "a1111",
+        "baseUrl": "http://127.0.0.1:7860",
+        "negativePrompt": "text, letters, watermark, logo, blurry, deformed",
+        "extra": {
+          "steps": 30,
+          "cfg_scale": 6
+        }
+      },
+      "comfyui": {
+        "type": "comfyui",
+        "baseUrl": "http://127.0.0.1:8188",
+        "workflow": "ai-workflows/comfyui-sdxl.json"
+      },
+      "my-cli": {
+        "type": "command",
+        "command": "my-image-tool --prompt-file {{prompt_file}} --width {{width}} --height {{height}} --out {{out}}"
+      }
+    }
+  },
+  "voice": {
+    "default": "none",
+    "presets": {
+      "none": {
+        "type": "none"
+      },
+      "gemini": {
+        "type": "gemini"
+      },
+      "openai": {
+        "type": "openai",
+        "model": "gpt-4o-mini-tts",
+        "voice": "ash"
+      },
+      "openai-compatible-local": {
+        "type": "openai",
+        "baseUrl": "http://127.0.0.1:8880/v1",
+        "model": "tts-1",
+        "voice": "default",
+        "useStyleInstruction": false
+      },
+      "elevenlabs": {
+        "type": "elevenlabs",
+        "voiceId": "<voice-id-tu-elevenlabs>"
+      },
+      "piper": {
+        "type": "command",
+        "command": "piper --model voices/vi_VN-vais1000-medium.onnx --output_file {{out}} < {{text_file}}"
+      }
+    }
+  }
+}

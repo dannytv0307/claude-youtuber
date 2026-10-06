@@ -1,4 +1,4 @@
-import { transitionFrames, type RenderScene } from "./schema/video-spec";
+import { transitionFrames, type RenderData, type RenderScene } from "./schema/video-spec";
 
 /** Silence before the voice in each scene - keep in sync with scripts/lib/render-data.ts */
 export const LEAD_SEC = 0.3;
@@ -9,6 +9,21 @@ export type SceneTiming = {
   voiceStart: number;
   voiceEnd: number;
 };
+
+/**
+ * Speed the voice up/down by `rate`: each voice gets shorter by voice*(1-1/rate)
+ * and its scene shrinks by the same amount, keeping lead/tail padding intact.
+ */
+export const withPlaybackRate = (data: RenderData, rate: number): RenderData =>
+  rate === 1
+    ? data
+    : {
+        ...data,
+        scenes: data.scenes.map((s) => {
+          const voiceDurationSec = s.voiceDurationSec / rate;
+          return { ...s, voiceDurationSec, durationSec: s.durationSec - s.voiceDurationSec + voiceDurationSec };
+        }),
+      };
 
 /** Absolute frame positions of each scene, accounting for transition overlaps. */
 export const computeTimings = (scenes: RenderScene[], fps: number) => {

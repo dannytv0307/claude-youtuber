@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import {
   AudioCatalogSchema,
   FPS,
@@ -14,9 +15,17 @@ import {
   CATALOG_PATH,
   projectPaths,
   readJson,
+  ROOT,
   toPublicAbs,
   writeJson,
 } from "./paths";
+
+/** Keys registered in src/custom/index.ts, read as text (the components only run in the browser) */
+const customComponentKeys = () => {
+  const file = path.join(ROOT, "src", "custom", "index.ts");
+  if (!fs.existsSync(file)) return [];
+  return [...fs.readFileSync(file, "utf8").matchAll(/^\s*["']([^"']+)["']\s*:/gm)].map((m) => m[1]);
+};
 
 /** Silence before the voice starts in each scene */
 export const LEAD_SEC = 0.3;
@@ -72,9 +81,10 @@ export const buildRenderData = (id: string) => {
   };
 
   const scenes = spec.scenes.map((scene, i) => {
-    const image = fs.existsSync(toPublicAbs(p.publicImage(i)))
-      ? p.publicImage(i)
-      : null;
+    const image =
+      scene.visual.type === "image" && fs.existsSync(toPublicAbs(p.publicImage(i)))
+        ? p.publicImage(i)
+        : null;
     const voicePath = toPublicAbs(p.publicVoice(i));
     const voice = fs.existsSync(voicePath) ? p.publicVoice(i) : null;
     const voiceDurationSec = voice
@@ -89,6 +99,7 @@ export const buildRenderData = (id: string) => {
       narration: scene.narration,
       onScreenText: scene.onScreenText,
       transition: scene.transition,
+      visual: scene.visual,
       image,
       voice,
       voiceDurationSec,
@@ -98,6 +109,15 @@ export const buildRenderData = (id: string) => {
       visualPrompt: scene.visualPrompt,
     };
   });
+
+  for (const scene of spec.scenes) {
+    if (scene.visual.type === "image" && !scene.visualPrompt.trim())
+      warnings.push(`Cảnh "${scene.id}" dùng ảnh AI nhưng thiếu visualPrompt`);
+    if (scene.visual.type === "custom" && !customComponentKeys().includes(scene.visual.component))
+      warnings.push(
+        `Cảnh "${scene.id}": chưa có component "${scene.visual.component}" trong src/custom/index.ts`,
+      );
+  }
 
   let music: RenderData["music"] = null;
   if (spec.music) {

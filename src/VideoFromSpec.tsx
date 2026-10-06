@@ -8,6 +8,7 @@ import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import { Fragment, useMemo } from "react";
 import { AbsoluteFill, useVideoConfig } from "remotion";
+import type { z } from "zod";
 import { BackgroundMusic } from "./components/BackgroundMusic";
 import { SceneView } from "./components/SceneView";
 import { fontFamily } from "./fonts";
@@ -15,12 +16,12 @@ import {
   transitionFrames,
   type RenderData,
   type Transition,
+  type VideoPropsSchema,
 } from "./schema/video-spec";
 import { computeTimings } from "./timeline";
 
-export type VideoProps = {
-  projectId: string;
-  /** Filled by calculateMetadata from public/projects/<id>/render.json */
+export type VideoProps = z.infer<typeof VideoPropsSchema> & {
+  /** Filled by calculateMetadata from public/projects/<id>/render.json, already re-timed for playbackRate */
   data?: RenderData | null;
 };
 
@@ -38,7 +39,7 @@ const presentationFor = (t: Transition): TransitionPresentation<any> => {
   }
 };
 
-export const VideoFromSpec: React.FC<VideoProps> = ({ projectId, data }) => {
+export const VideoFromSpec: React.FC<VideoProps> = ({ projectId, playbackRate, data }) => {
   const { fps } = useVideoConfig();
   const timings = useMemo(() => (data ? computeTimings(data.scenes, fps) : []), [data, fps]);
 
@@ -63,7 +64,7 @@ export const VideoFromSpec: React.FC<VideoProps> = ({ projectId, data }) => {
               durationInFrames={timings[i].duration}
               premountFor={fps}
             >
-              <SceneView scene={scene} index={i} spec={data.spec} />
+              <SceneView scene={scene} index={i} spec={data.spec} voicePlaybackRate={playbackRate ?? 1} />
             </TransitionSeries.Sequence>
             {i < last && scene.transition !== "none" ? (
               <TransitionSeries.Transition
@@ -79,7 +80,8 @@ export const VideoFromSpec: React.FC<VideoProps> = ({ projectId, data }) => {
           file={data.music.file}
           volume={data.music.volume}
           duckUnderVoice={data.music.duckUnderVoice}
-          timings={timings}
+          // Duck only where a voice file actually plays (captions-only scenes keep full music)
+          timings={timings.filter((_, i) => data.scenes[i].voice)}
         />
       ) : null}
     </AbsoluteFill>

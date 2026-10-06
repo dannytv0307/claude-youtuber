@@ -30,8 +30,9 @@ for (const s of spec.scenes) {
 console.log(`Spec "${id}" hợp lệ theo schema.`);
 console.log(`  format=${spec.format} language=${spec.language} scenes=${scenes.length}`);
 console.log(`  thời lượng ≈ ${totalSec.toFixed(1)}s (mục tiêu ${spec.targetDurationSec}s)`);
+const imageScenes = scenes.filter((s) => s.visual.type === "image");
 console.log(
-  `  giọng đọc: ${scenes.filter((s) => s.voice).length}/${scenes.length}, hình ảnh: ${scenes.filter((s) => s.image).length}/${scenes.length}`,
+  `  giọng đọc: ${scenes.filter((s) => s.voice).length}/${scenes.length}, ảnh AI: ${imageScenes.filter((s) => s.image).length}/${imageScenes.length}, cảnh vẽ bằng code: ${scenes.length - imageScenes.length}`,
 );
 console.log(`  nhạc nền: ${data.music ? data.music.file : "không có"}`);
 if (problems.length) {

@@ -1,6 +1,7 @@
 /**
  * Render a project to out/<id>.mp4.
- *   npx tsx scripts/render.ts <id> [extra remotion render flags]
+ *   npx tsx scripts/render.ts <id> [--playback-rate=1.25] [extra remotion render flags]
+ * --playback-rate speeds the voice up/down (same as the prop in Studio).
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -9,7 +10,13 @@ import path from "node:path";
 import { ROOT, requireProjectId } from "./lib/paths";
 import { buildRenderData } from "./lib/render-data";
 
-const id = requireProjectId("npx tsx scripts/render.ts <id>");
+const id = requireProjectId("npx tsx scripts/render.ts <id> [--playback-rate=1.25]");
+const rateArg = process.argv.find((a) => a.startsWith("--playback-rate="));
+const playbackRate = rateArg ? Number(rateArg.split("=")[1]) : 1;
+if (!(playbackRate >= 0.5 && playbackRate <= 2)) {
+  console.error("--playback-rate phải nằm trong khoảng 0.5 – 2");
+  process.exit(1);
+}
 const { data, warnings, totalSec } = buildRenderData(id);
 warnings.forEach((w) => console.warn(`⚠ ${w}`));
 
@@ -21,11 +28,13 @@ if (missing.length) {
 // Single composition; size/length come from render.json via calculateMetadata
 const composition = "Video";
 const propsFile = path.join(os.tmpdir(), `yt-vtv-${id}-props.json`);
-fs.writeFileSync(propsFile, JSON.stringify({ projectId: id }));
+fs.writeFileSync(propsFile, JSON.stringify({ projectId: id, playbackRate }));
 const out = path.join("out", `${id}.mp4`);
-const extra = process.argv.slice(2).filter((a) => a.startsWith("--"));
+const extra = process.argv.slice(2).filter((a) => a.startsWith("--") && a !== rateArg);
 
-console.log(`Render ${composition} → ${out} (≈${totalSec.toFixed(1)}s)`);
+const voiceSec = data.scenes.reduce((sum, s) => sum + s.voiceDurationSec, 0);
+const estSec = totalSec - voiceSec * (1 - 1 / playbackRate);
+console.log(`Render ${composition} → ${out} (≈${estSec.toFixed(1)}s${playbackRate !== 1 ? `, giọng x${playbackRate}` : ""})`);
 const cmd = ["npx remotion render", composition, `"${out}"`, `--props="${propsFile}"`, ...extra].join(" ");
 const res = spawnSync(cmd, { cwd: ROOT, stdio: "inherit", shell: true });
 process.exit(res.status ?? 1);

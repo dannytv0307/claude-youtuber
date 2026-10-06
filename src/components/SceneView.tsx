@@ -9,7 +9,9 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { customScenes } from "../custom";
 import { fontFamily } from "../fonts";
+import { isLayout, LayoutBackground, LayoutScene } from "../layouts";
 import type { RenderScene, VideoSpec } from "../schema/video-spec";
 import { LEAD_SEC } from "../timeline";
 import { Captions } from "./Captions";
@@ -18,6 +20,8 @@ type Props = {
   scene: RenderScene;
   index: number;
   spec: VideoSpec;
+  /** scene.voiceDurationSec is already divided by this */
+  voicePlaybackRate: number;
 };
 
 /** Slow zoom/pan ("Ken Burns"), direction alternates per scene. */
@@ -45,7 +49,7 @@ const KenBurns: React.FC<{ src: string; index: number }> = ({ src, index }) => {
   );
 };
 
-/** Shown while the image has not been generated yet. */
+/** Shown while the image has not been generated yet (or a custom component is missing). */
 const Placeholder: React.FC<{ prompt: string; index: number }> = ({ prompt, index }) => {
   const hue = (index * 47) % 360;
   return (
@@ -73,7 +77,28 @@ const Placeholder: React.FC<{ prompt: string; index: number }> = ({ prompt, inde
   );
 };
 
-export const SceneView: React.FC<Props> = ({ scene, index, spec }) => {
+/** The frame filler: AI image, code-drawn layout, or custom component */
+const Visual: React.FC<{ scene: RenderScene; index: number; spec: VideoSpec }> = ({ scene, index, spec }) => {
+  const visual = scene.visual;
+  if (isLayout(visual)) return <LayoutScene visual={visual} spec={spec} />;
+  if (visual.type === "custom") {
+    const Custom = customScenes[visual.component];
+    if (!Custom) return <Placeholder prompt={`[thiếu component "${visual.component}"]`} index={index} />;
+    return (
+      <AbsoluteFill>
+        <LayoutBackground spec={spec} />
+        <Custom props={visual.props} scene={scene} spec={spec} />
+      </AbsoluteFill>
+    );
+  }
+  return scene.image ? (
+    <KenBurns src={scene.image} index={index} />
+  ) : (
+    <Placeholder prompt={scene.visualPrompt} index={index} />
+  );
+};
+
+export const SceneView: React.FC<Props> = ({ scene, index, spec, voicePlaybackRate }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
   const vertical = height > width;
@@ -81,21 +106,20 @@ export const SceneView: React.FC<Props> = ({ scene, index, spec }) => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
-      {scene.image ? (
-        <KenBurns src={scene.image} index={index} />
-      ) : (
-        <Placeholder prompt={scene.visualPrompt} index={index} />
-      )}
+      <Visual scene={scene} index={index} spec={spec} />
 
-      {/* Darken top and bottom so text stays readable */}
-      <AbsoluteFill
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 100%)",
-        }}
-      />
+      {/* Darken top and bottom of images so text stays readable */}
+      {scene.visual.type === "image" ? (
+        <AbsoluteFill
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 100%)",
+          }}
+        />
+      ) : null}
 
-      {scene.onScreenText ? (
+      {/* Layouts carry their own text, so the headline is only drawn over images and custom scenes */}
+      {scene.onScreenText && !isLayout(scene.visual) ? (
         <AbsoluteFill
           style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: vertical ? 220 : 70 }}
         >
@@ -129,7 +153,12 @@ export const SceneView: React.FC<Props> = ({ scene, index, spec }) => {
       ) : null}
 
       {scene.voice ? (
-        <Audio name={`voice ${scene.id}`} src={staticFile(scene.voice)} from={Math.round(LEAD_SEC * fps)} />
+        <Audio
+          name={`voice ${scene.id}`}
+          src={staticFile(scene.voice)}
+          from={Math.round(LEAD_SEC * fps)}
+          playbackRate={voicePlaybackRate}
+        />
       ) : null}
 
       {scene.sfx.map((s) => (
